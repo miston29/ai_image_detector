@@ -46,10 +46,9 @@ def singlePredict(IMAGEPATH, THRESH):
         else:
             print(f"{IMAGEPATH} has very high chances of being FAKE")
 
-
-image_path = "custom\\im2.png"
-
-singlePredict(image_path, 0.90)
+if __name__ == "__main__":
+        image_path = input("image path > ")
+        singlePredict(image_path, 0.90)
 
 
 
