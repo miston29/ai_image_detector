@@ -40,3 +40,7 @@ def batchPredict(FOLDERPATH, THRESH):
 
             else:
                 print(f"{image}\t: FAKE {(1-prob)*100:.2f}")
+
+if __name__ == "__main__":
+        folderpath = input("folder path > ")
+        batchPredict(folderpath, 0.90)
