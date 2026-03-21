@@ -5,19 +5,7 @@ import torch
 from PIL import Image
 import numpy as np
 import timm
-from random import shuffle
-
-SIZE = 8
-ipaths = []
-for i in range(SIZE):
-    num = random.randint(0, 5400)
-    ipaths.append((f"Deeta\\Test\\Fake\\fake_{num}.jpg", "FAKE"))
-
-for i in range(SIZE):
-    num = random.randint(0, 5400)
-    ipaths.append((f"Deeta\\Test\\Real\\real_{num}.jpg", "REAL"))
-
-
+import os
 
 transform = A.Compose([
         A.Resize(256, 256),
@@ -28,31 +16,27 @@ transform = A.Compose([
         ToTensorV2()
     ])
 
-data_transformed = []
-
-
-for imgpth, label in ipaths:
-    image = Image.open(imgpth).convert("RGB")
-    iarr = np.array(image)
-    timg = transform(image=iarr)
-    itensor = timg["image"].unsqueeze(0)
-
-    data_transformed.append((itensor, label))
-
-shuffle(data_transformed)
-
 model = timm.create_model("efficientvit_b0", pretrained=False, num_classes=1)
 checkpoint = torch.load("models\\deepfake_model_final.pt", map_location="cuda")
 model.load_state_dict(checkpoint)
 
 model.eval()
 
-with torch.no_grad():
-    print(f"{'ACTUAL':<{10}} {'PROBABILITY':<{15}} {'PREDICTED':<{10}} {'RESULT':<{10}}")
-    print("-"*45)
-    for IMAGE, LABEL in data_transformed:
-        logits = model(IMAGE)
-        prob = torch.sigmoid(logits).item()
-        answer = "REAL" if prob > 0.90 else "FAKE"
-        result = "✔" if answer == LABEL else "❌"
-        print(f"{LABEL:<{10}} {prob:<{15}.3f} {answer:<{10}} {result:<{10}}")
+
+def batchPredict(FOLDERPATH, THRESH):
+    for image in os.listdir(FOLDERPATH):
+        img = Image.open(f"{FOLDERPATH}\\{image}").convert("RGB")
+        iarr = np.array(img)
+        timg = transform(image=iarr)
+        itensor = timg["image"].unsqueeze(0)
+
+
+        with torch.no_grad():
+            logits = model(itensor)
+            prob = torch.sigmoid(logits).item()
+
+            if prob > THRESH:
+                print(f"{image}\t: REAL {prob*100:.2f}")
+
+            else:
+                print(f"{image}\t: FAKE {(1-prob)*100:.2f}")
